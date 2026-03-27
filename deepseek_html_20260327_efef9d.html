@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TaskFlow · Lista de Tarefas Persistente</title>
+    <!-- Font Awesome 6 (ícones modernos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9f0fc 0%, #d9e4f5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        /* Container principal estilo glassmorphism leve */
+        .task-container {
+            max-width: 720px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(0px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* cabeçalho decorativo */
+        .header {
+            background: #1e2f5e;
+            padding: 1.5rem 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.3px;
+        }
+
+        .header h1 i {
+            font-size: 1.9rem;
+            color: #ffd966;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.85;
+            margin-top: 0.4rem;
+        }
+
+        /* conteúdo interno */
+        .content {
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        /* área de adicionar */
+        .add-section {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #taskInput {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 1.5rem;
+            background: #fefefe;
+            transition: all 0.2s;
+            outline: none;
+            font-weight: 500;
+            color: #0f172a;
+        }
+
+        #taskInput:focus {
+            border-color: #1e2f5e;
+            box-shadow: 0 0 0 3px rgba(30, 47, 94, 0.2);
+        }
+
+        #addBtn {
+            background: #1e2f5e;
+            border: none;
+            padding: 0 1.6rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        #addBtn:hover {
+            background: #112245;
+            transform: scale(0.97);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* lista de tarefas */
+        .tasks-area {
+            background: #f8fafd;
+            border-radius: 1.5rem;
+            padding: 0.2rem 0;
+            margin-bottom: 1.8rem;
+            box-shadow: inset 0 1px 2px #00000008, 0 1px 0 #ffffff;
+        }
+
+        .task-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 0.5rem 0.2rem 0.5rem 0.5rem;
+        }
+
+        /* custom scrollbar */
+        .task-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+
+        .task-item {
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1rem;
+            border-radius: 1.2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s;
+            border: 1px solid #eef2f8;
+        }
+
+        .task-item:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+            transform: translateX(3px);
+        }
+
+        .task-text {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #0a2540;
+            word-break: break-word;
+            padding-right: 0.8rem;
+            flex: 1;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            border: none;
+            width: 2.3rem;
+            height: 2.3rem;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #b91c1c;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+
+        .delete-btn:hover {
+            background: #fecaca;
+            color: #991b1b;
+            transform: scale(1.05);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #64748b;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .empty-message i {
+            font-size: 2.8rem;
+            opacity: 0.5;
+            color: #94a3b8;
+        }
+
+        /* ações inferiores */
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.8rem;
+        }
+
+        #clearAllBtn {
+            background: #fff1f0;
+            border: 1px solid #ffcdca;
+            padding: 0.7rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #b91c1c;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #clearAllBtn:hover {
+            background: #ffe4e2;
+            border-color: #f5a3a0;
+            transform: scale(0.97);
+        }
+
+        .task-counter {
+            background: #eef3ff;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e2f5e;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 3rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+            background: #0f172ad9;
+        }
+
+        /* responsividade */
+        @media (max-width: 550px) {
+            .content {
+                padding: 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .add-section {
+                flex-direction: column;
+            }
+            #addBtn {
+                justify-content: center;
+                padding: 0.8rem;
+            }
+            .task-text {
+                font-size: 0.9rem;
+            }
+            .actions-bar {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+            #clearAllBtn {
+                justify-content: center;
+            }
+            .task-counter {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="task-container">
+    <div class="header">
+        <h1>
+            <i class="fas fa-check-circle"></i> 
+            TaskFlow
+        </h1>
+        <p><i class="fas fa-database"></i> Suas tarefas ficam salvas no navegador · mesmo fechando, elas permanecem</p>
+    </div>
+    <div class="content">
+        <!-- Área de cadastro -->
+        <div class="add-section">
+            <div class="input-wrapper">
+                <input type="text" id="taskInput" placeholder="Ex: Estudar JavaScript, Fazer exercícios, ..." autocomplete="off">
+            </div>
+            <button id="addBtn">
+                <i class="fas fa-plus-circle"></i> Adicionar
+            </button>
+        </div>
+
+        <!-- Lista de tarefas -->
+        <div class="tasks-area">
+            <ul class="task-list" id="taskList">
+                <!-- Itens dinâmicos via JavaScript -->
+                <li class="empty-message">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Nenhuma tarefa por aqui ✨<br>Adicione a primeira acima!</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Ações e contador -->
+        <div class="actions-bar">
+            <button id="clearAllBtn">
+                <i class="fas fa-trash-can"></i> Limpar todas as tarefas
+            </button>
+            <div class="task-counter" id="taskCounter">
+                <i class="fas fa-list-check"></i> <span id="counterValue">0</span> tarefa(s)
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de notificação rápida (opcional, para feedback) -->
+<div id="toastMsg" class="toast-msg"></div>
+
+<script>
+    // ========================  APLICAÇÃO DE TAREFAS COM LOCALSTORAGE ========================
+    // Chave única para armazenamento
+    const STORAGE_KEY = "taskflow_app_tasks";
+
+    // Estado principal: array de tarefas (cada tarefa = { id, text })
+    let tasks = [];
+
+    // Elementos DOM
+    const taskListEl = document.getElementById("taskList");
+    const taskInput = document.getElementById("taskInput");
+    const addButton = document.getElementById("addBtn");
+    const clearAllButton = document.getElementById("clearAllBtn");
+    const counterSpan = document.getElementById("counterValue");
+    const toastEl = document.getElementById("toastMsg");
+
+    // ========================  FUNÇÕES AUXILIARES ========================
+    // Exibir mensagem flutuante (toast) por 2 segundos
+    function showMessage(message, isError = false) {
+        if (!toastEl) return;
+        toastEl.textContent = message;
+        toastEl.style.backgroundColor = isError ? "#b91c1cd9" : "#0f172ad9";
+        toastEl.style.opacity = "1";
+        setTimeout(() => {
+            toastEl.style.opacity = "0";
+        }, 2000);
+    }
+
+    // Carregar tarefas do localStorage
+    function loadTasksFromStorage() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+            tasks = [];
+            return;
+        }
+        try {
+            const parsed = JSON.parse(stored);
+            // validação simples: garantir que é um array e cada item possui id e text
+            if (Array.isArray(parsed)) {
+                tasks = parsed.filter(item => item && typeof item.id === 'number' && typeof item.text === 'string');
+            } else {
+                tasks = [];
+            }
+        } catch (error) {
+            console.error("Erro ao ler localStorage:", error);
+            tasks = [];
+        }
+    }
+
+    // Salvar array tasks no localStorage e atualizar contador/visualização
+    function persistTasks() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        updateCounter();
+        renderTaskList();
+    }
+
+    // Atualizar contador de tarefas (quantidade)
+    function updateCounter() {
+        const total = tasks.length;
+        counterSpan.innerText = total;
+        // tooltip amigável no título do contador (apenas UX)
+        const counterContainer = document.getElementById("taskCounter");
+        if (counterContainer) {
+            counterContainer.style.opacity = "1";
+        }
+    }
+
+    // Renderizar completamente a lista de tarefas na interface
+    function renderTaskList() {
+        // Limpa o container atual
+        taskListEl.innerHTML = "";
+
+        if (tasks.length === 0) {
+            // Exibe mensagem amigável quando não há tarefas
+            const emptyLi = document.createElement("li");
+            emptyLi.className = "empty-message";
+            emptyLi.innerHTML = `
+                <i class="fas fa-clipboard-list"></i>
+                <span>Nenhuma tarefa cadastrada 🗒️<br>Adicione uma tarefa usando o campo acima!</span>
+            `;
+            taskListEl.appendChild(emptyLi);
+            return;
+        }
+
+        // Percorre todas as tarefas e cria elemento li com botão de remoção
+        tasks.forEach(task => {
+            const li = document.createElement("li");
+            li.className = "task-item";
+            li.setAttribute("data-task-id", task.id);
+
+            // Span com o texto da tarefa
+            const taskTextSpan = document.createElement("span");
+            taskTextSpan.className = "task-text";
+            taskTextSpan.innerText = task.text;
+
+            // Botão de remover (exclusão individual)
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.setAttribute("aria-label", `Remover tarefa: ${task.text}`);
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            // Armazenamos o ID da tarefa no próprio botão (dataset)
+            deleteBtn.dataset.id = task.id;
+
+            li.appendChild(taskTextSpan);
+            li.appendChild(deleteBtn);
+            taskListEl.appendChild(li);
+        });
+    }
+
+    // Adicionar nova tarefa (validação + push + persist)
+    function addNewTask() {
+        let rawText = taskInput.value;
+        if (!rawText || rawText.trim() === "") {
+            showMessage("❌ Por favor, digite uma tarefa válida (não pode estar vazia).", true);
+            taskInput.focus();
+            return false;
+        }
+
+        const trimmedText = rawText.trim();
+        // Evitar tarefas com apenas espaços ou strings vazias já tratado
+        // Opcional: evitar duplicatas exatas? não obrigatório, mas por boa prática avisamos se quiser, mas não bloqueamos.
+        // Mas não há restrição, permitimos tarefas iguais, é comum.
+        
+        const newTask = {
+            id: Date.now(),  // timestamp único
+            text: trimmedText
+        };
+        
+        tasks.push(newTask);
+        persistTasks();      // salva no localStorage + re-renderiza + contador
+        
+        // Limpa campo e devolve foco
+        taskInput.value = "";
+        taskInput.focus();
+        showMessage(`✅ Tarefa "${trimmedText.substring(0, 35)}" adicionada com sucesso!`);
+        return true;
+    }
+
+    // Remover tarefa específica pelo ID
+    function removeTaskById(taskId) {
+        const beforeLength = tasks.length;
+        tasks = tasks.filter(task => task.id !== taskId);
+        
+        if (tasks.length === beforeLength) {
+            showMessage("⚠️ Tarefa não encontrada ou já removida.", true);
+            return;
+        }
+        
+        persistTasks(); // atualiza storage e interface
+        showMessage(`🗑️ Tarefa removida com sucesso.`);
+    }
+
+    // Limpar TODAS as tarefas (com confirmação)
+    function clearAllTasks() {
+        if (tasks.length === 0) {
+            showMessage("✨ Nenhuma tarefa para limpar. A lista já está vazia.", false);
+            return;
+        }
+        
+        const confirmClear = confirm("⚠️ ATENÇÃO: Isso apagará TODAS as tarefas permanentemente. Deseja continuar?");
+        if (!confirmClear) {
+            showMessage("Operação cancelada. Nenhuma tarefa foi removida.");
+            return;
+        }
+        
+        tasks = [];          // esvazia array
+        persistTasks();      // salva array vazio no localStorage e atualiza tela
+        showMessage("🧹 Todas as tarefas foram removidas com sucesso!");
+    }
+
+    // ========================  EVENTOS E DELEGAÇÃO ========================
+    // Delegação de eventos para cliques nos botões de remover (dinâmicos)
+    function handleListClick(event) {
+        // Identificar se o clique foi em um botão .delete-btn ou em seu ícone (filho)
+        let targetElement = event.target;
+        let deleteButton = null;
+        
+        // Verifica se clicou diretamente no botão ou no ícone dentro do botão
+        if (targetElement.classList && targetElement.classList.contains('delete-btn')) {
+            deleteButton = targetElement;
+        } else if (targetElement.parentElement && targetElement.parentElement.classList && targetElement.parentElement.classList.contains('delete-btn')) {
+            deleteButton = targetElement.parentElement;
+        }
+        
+        if (deleteButton && deleteButton.dataset && deleteButton.dataset.id) {
+            const taskId = Number(deleteButton.dataset.id);
+            if (!isNaN(taskId)) {
+                removeTaskById(taskId);
+            } else {
+                showMessage("Erro ao identificar tarefa.", true);
+            }
+            event.stopPropagation();
+        }
+    }
+
+    // Adicionar tarefa ao pressionar Enter no campo de input
+    function handleKeyPress(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            addNewTask();
+        }
+    }
+
+    // ========================  INICIALIZAÇÃO DA APLICAÇÃO ========================
+    function initApp() {
+        // Carrega dados salvos do localStorage
+        loadTasksFromStorage();
+        // Renderiza a lista com as tarefas carregadas (ou vazia)
+        renderTaskList();
+        updateCounter();
+        
+        // Event Listeners
+        addButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            addNewTask();
+        });
+        
+        clearAllButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            clearAllTasks();
+        });
+        
+        taskInput.addEventListener("keypress", handleKeyPress);
+        
+        // Delegação de eventos para remoção individual (cliques futuros)
+        taskListEl.addEventListener("click", handleListClick);
+        
+        // Foco inicial no campo para melhor usabilidade
+        taskInput.focus();
+        
+        // Mensagem de boas-vindas opcional (apenas se já existirem tarefas)
+        if (tasks.length > 0) {
+            showMessage(`📋 ${tasks.length} tarefa(s) carregada(s) do seu navegador.`, false);
+        } else {
+            showMessage("🌟 Bem-vindo! Adicione suas tarefas diárias — elas ficam salvas automaticamente.");
+        }
+    }
+    
+    // Inicializar a aplicação quando o DOM estiver totalmente carregado
+    document.addEventListener("DOMContentLoaded", initApp);
+</script>
+</body>
+</html>
